@@ -429,6 +429,14 @@
     </div>
 
     <script>
+        // Test di funzionamento all'avvio
+        console.log('Script caricato correttamente!');
+        
+        // Aggiungi listener per testare
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM caricato, elementi disponibili');
+        });
+
         let currentUser = '';
         let events = [];
         let users = new Set();
