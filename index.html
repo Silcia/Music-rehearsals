@@ -121,6 +121,20 @@
             grid-column: 1 / -1;
         }
 
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .notify-btn {
+            background: #28a745 !important;
+        }
+
+        .notify-btn:hover {
+            background: #218838 !important;
+        }
+
         .events-list {
             max-height: 600px;
             overflow-y: auto;
@@ -158,6 +172,11 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 15px;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 5px;
         }
 
         .event-title {
@@ -285,6 +304,20 @@
             background: #c82333;
         }
 
+        .small-notify-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .small-notify-btn:hover {
+            background: #218838;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -301,6 +334,10 @@
             }
             
             .comment-form {
+                flex-direction: column;
+            }
+
+            .button-row {
                 flex-direction: column;
             }
         }
@@ -397,7 +434,10 @@
                     <div class="form-row">
                         <textarea id="event-description" placeholder="Descrizione evento..." class="form-full"></textarea>
                     </div>
-                    <button type="button" id="create-btn">Crea Evento</button>
+                    <div class="button-row">
+                        <button type="button" id="create-btn">Crea Evento</button>
+                        <button type="button" id="notify-btn" class="notify-btn">📧 Invia Notifica</button>
+                    </div>
                 </div>
 
                 <div class="events-list" id="events-list">
@@ -429,7 +469,7 @@
     </div>
 
     <script>
-        console.log('App inizializzata!');
+        console.log('✅ App Pianificatore con Notifiche - Versione 2.0');
         
         let currentUser = '';
         let eventsArray = [];
@@ -445,7 +485,7 @@
                 document.getElementById('username').value = '';
                 displayUserList();
                 updateStatistics();
-                console.log('Login effettuato per:', username);
+                console.log('✅ Login effettuato per:', username);
             } else {
                 alert('Per favore, inserisci un nome utente!');
             }
@@ -461,11 +501,137 @@
             });
         }
 
+        function copyToClipboard(text) {
+            try {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ Testo della notifica copiato negli appunti!\n\n📱 Ora puoi incollarlo in:\n• WhatsApp\n• Telegram\n• Email\n• SMS\n• Qualsiasi altra app');
+                }).catch(() => {
+                    // Fallback per browser più vecchi
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('✅ Testo copiato negli appunti!\n\nIncollalo dove preferisci per condividerlo.');
+                });
+            } catch (error) {
+                console.error('Errore copia:', error);
+                // Ultimo fallback: mostra il testo in un prompt
+                prompt('❗ Copia manualmente questo testo e condividilo:', text);
+            }
+        }
+
+        function sendNotification() {
+            console.log('🔔 Invio notifica ultimo evento...');
+            
+            if (eventsArray.length === 0) {
+                alert('❌ Nessun evento da notificare!\n\nCrea prima un evento.');
+                return;
+            }
+
+            // Prendi l'ultimo evento creato
+            const lastEvent = eventsArray[eventsArray.length - 1];
+            const eventDate = new Date(lastEvent.date);
+            
+            const emailContent = `🎯 NUOVO EVENTO CREATO
+
+📅 Evento: ${lastEvent.title}
+🕒 Data: ${eventDate.toLocaleDateString('it-IT')} alle ${eventDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})}
+👤 Creato da: ${lastEvent.author}
+📝 Descrizione: ${lastEvent.description || 'Nessuna descrizione'}
+⭐ Priorità: ${getPriorityLabel(lastEvent.priority)}
+
+${lastEvent.files.length > 0 ? `📎 File allegati: ${lastEvent.files.join(', ')}\n` : ''}
+🔗 Link al pianificatore: ${window.location.href}
+
+---
+📱 Messaggio dal Pianificatore Appuntamenti`;
+
+            // Prova prima l'email, poi copia negli appunti
+            const choice = confirm(`📧 Inviare notifica per "${lastEvent.title}"?\n\n✅ OK = Prova ad aprire l'email\n❌ Annulla = Copia il testo direttamente`);
+            
+            if (choice) {
+                try {
+                    const subject = encodeURIComponent(`🎯 Nuovo Evento: ${lastEvent.title}`);
+                    const body = encodeURIComponent(emailContent);
+                    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+                    
+                    console.log('📧 Tentativo apertura client email...');
+                    window.location.href = mailtoLink;
+                    
+                    // Fallback dopo 3 secondi se l'email non si apre
+                    setTimeout(() => {
+                        const stillHere = confirm('❓ Il client email non si è aperto?\n\n✅ Clicca OK per copiare il testo negli appunti');
+                        if (stillHere) {
+                            copyToClipboard(emailContent);
+                        }
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('❌ Errore apertura email:', error);
+                    copyToClipboard(emailContent);
+                }
+            } else {
+                copyToClipboard(emailContent);
+            }
+        }
+
+        function notifyEvent(eventId) {
+            console.log('🔔 Notifica per evento specifico:', eventId);
+            
+            const event = eventsArray.find(e => e.id === eventId);
+            if (!event) {
+                console.error('❌ Evento non trovato:', eventId);
+                return;
+            }
+
+            const eventDate = new Date(event.date);
+            
+            const emailContent = `📋 PROMEMORIA EVENTO
+
+📅 Evento: ${event.title}
+🕒 Data: ${eventDate.toLocaleDateString('it-IT')} alle ${eventDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})}
+👤 Creato da: ${event.author}
+📝 Descrizione: ${event.description || 'Nessuna descrizione'}
+⭐ Priorità: ${getPriorityLabel(event.priority)}
+
+${event.files.length > 0 ? `📎 File allegati: ${event.files.join(', ')}\n` : ''}
+${event.comments.length > 0 ? `💬 Commenti recenti:\n${event.comments.slice(-3).map(c => `• ${c.author}: ${c.text}`).join('\n')}\n` : ''}
+🔗 Link al pianificatore: ${window.location.href}
+
+---
+📱 Promemoria dal Pianificatore Appuntamenti`;
+
+            // Scelta tra email e copia
+            const choice = confirm(`📋 Inviare promemoria per "${event.title}"?\n\n✅ OK = Prova email\n❌ Annulla = Copia testo`);
+            
+            if (choice) {
+                try {
+                    const subject = encodeURIComponent(`📋 Promemoria: ${event.title}`);
+                    const body = encodeURIComponent(emailContent);
+                    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                    
+                    setTimeout(() => {
+                        const stillHere = confirm('❓ Email non disponibile?\n\nVuoi copiare il testo?');
+                        if (stillHere) {
+                            copyToClipboard(emailContent);
+                        }
+                    }, 3000);
+                } catch (error) {
+                    console.error('❌ Errore email:', error);
+                    copyToClipboard(emailContent);
+                }
+            } else {
+                copyToClipboard(emailContent);
+            }
+        }
+
         function saveNewEvent() {
-            console.log('Tentativo di creare evento...');
+            console.log('💾 Tentativo di creare nuovo evento...');
             
             if (!currentUser) {
-                alert('Per favore, accedi prima di creare un evento!');
+                alert('❌ Per favore, accedi prima di creare un evento!');
                 return;
             }
 
@@ -475,22 +641,30 @@
             const priority = document.getElementById('event-priority').value;
             const files = document.getElementById('event-files').files;
 
-            console.log('Dati raccolti:', { title, dateInput, description, priority });
+            console.log('📋 Dati raccolti:', { title, dateInput, description, priority });
 
             if (!title) {
-                alert('Per favore, inserisci il titolo dell\'evento!');
+                alert('❌ Per favore, inserisci il titolo dell\'evento!');
+                document.getElementById('event-title').focus();
                 return;
             }
 
             if (!dateInput) {
-                alert('Per favore, seleziona data e ora!');
+                alert('❌ Per favore, seleziona data e ora!');
+                document.getElementById('event-date').focus();
+                return;
+            }
+
+            const eventDate = new Date(dateInput);
+            if (isNaN(eventDate.getTime())) {
+                alert('❌ Data non valida!');
                 return;
             }
 
             const eventData = {
                 id: Date.now() + Math.random(),
                 title: title,
-                date: new Date(dateInput),
+                date: eventDate,
                 description: description || 'Nessuna descrizione',
                 priority: priority,
                 author: currentUser,
@@ -499,7 +673,7 @@
                 createdAt: new Date()
             };
 
-            console.log('Evento da salvare:', eventData);
+            console.log('✅ Evento da salvare:', eventData);
 
             eventsArray.push(eventData);
             eventsArray.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -513,13 +687,23 @@
             displayEvents();
             updateStatistics();
 
-            console.log('Evento creato con successo!');
-            alert('Evento "' + title + '" creato con successo!');
+            console.log('🎉 Evento creato con successo!');
+            alert(`🎉 Evento "${title}" creato con successo!\n\n💡 Usa il pulsante "📧 Invia Notifica" per condividerlo.`);
         }
 
         function displayEvents() {
             const eventsList = document.getElementById('events-list');
             eventsList.innerHTML = '';
+
+            if (eventsArray.length === 0) {
+                eventsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #6c757d;">
+                        <h3>📅 Nessun evento ancora</h3>
+                        <p>Crea il tuo primo evento usando il form sopra!</p>
+                    </div>
+                `;
+                return;
+            }
 
             eventsArray.forEach(event => {
                 const eventCard = document.createElement('div');
@@ -542,10 +726,13 @@
                                 ${isPast ? '<span style="color: #6c757d;">• PASSATO</span>' : ''}
                             </div>
                         </div>
-                        <button class="delete-btn" onclick="removeEvent(${event.id})">🗑️</button>
+                        <div class="event-actions">
+                            <button class="small-notify-btn" onclick="notifyEvent(${event.id})" title="Invia promemoria per questo evento">📧</button>
+                            <button class="delete-btn" onclick="removeEvent(${event.id})" title="Elimina evento">🗑️</button>
+                        </div>
                     </div>
                     
-                    ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                    ${event.description && event.description !== 'Nessuna descrizione' ? `<div class="event-description">${event.description}</div>` : ''}
                     
                     ${event.files.length > 0 ? `
                         <div class="event-files">
@@ -586,21 +773,26 @@
         }
 
         function removeEvent(eventId) {
-            if (confirm('Sei sicuro di voler eliminare questo evento?')) {
-                eventsArray = eventsArray.filter(event => event.id !== eventId);
+            const event = eventsArray.find(e => e.id === eventId);
+            if (event && confirm(`🗑️ Sei sicuro di voler eliminare "${event.title}"?`)) {
+                eventsArray = eventsArray.filter(e => e.id !== eventId);
                 displayEvents();
                 updateStatistics();
+                console.log('🗑️ Evento eliminato:', event.title);
             }
         }
 
         function saveComment(eventId) {
             if (!currentUser) {
-                alert('Per favore, accedi prima di commentare!');
+                alert('❌ Per favore, accedi prima di commentare!');
                 return;
             }
 
             const commentText = document.getElementById(`comment-${eventId}`).value.trim();
-            if (!commentText) return;
+            if (!commentText) {
+                alert('❌ Scrivi un commento prima di inviare!');
+                return;
+            }
 
             const event = eventsArray.find(e => e.id === eventId);
             if (event) {
@@ -612,6 +804,7 @@
 
                 document.getElementById(`comment-${eventId}`).value = '';
                 displayEvents();
+                console.log('💬 Commento aggiunto a:', event.title);
             }
         }
 
@@ -628,11 +821,12 @@
         }
 
         function initializeApp() {
+            // Evento di esempio
             const sampleEvents = [
                 {
                     id: 1,
                     title: "Daily rehearsals",
-                    date: new Date(Date.now() + 2 * 60 * 60 * 1000),
+                    date: new Date(Date.now() + 2 * 60 * 60 * 1000), // Tra 2 ore
                     description: "Sessioni di prova giornaliere per la preparazione",
                     priority: "medium",
                     author: "Sistema",
@@ -651,29 +845,55 @@
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM caricato!');
+            console.log('🚀 DOM caricato, inizializzazione app...');
             
+            // Aggiungi event listeners
             const loginBtn = document.getElementById('login-btn');
             const createBtn = document.getElementById('create-btn');
             const notifyBtn = document.getElementById('notify-btn');
             
             if (loginBtn) {
                 loginBtn.addEventListener('click', loginUser);
+                console.log('✅ Listener login aggiunto');
             }
             
             if (createBtn) {
                 createBtn.addEventListener('click', saveNewEvent);
+                console.log('✅ Listener creazione eventi aggiunto');
             }
             
             if (notifyBtn) {
                 notifyBtn.addEventListener('click', sendNotification);
+                console.log('✅ Listener notifiche aggiunto');
+            } else {
+                console.warn('⚠️ Pulsante notifica non trovato');
             }
             
+            // Aggiungi listener per invio commenti con Enter
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.classList.contains('comment-input')) {
+                    e.preventDefault();
+                    const eventId = e.target.id.replace('comment-', '');
+                    saveComment(parseFloat(eventId));
+                }
+            });
+            
             initializeApp();
+            console.log('🎉 App inizializzata completamente!');
         });
 
-        // Aggiorna ogni minuto
+        // Aggiorna ogni minuto per evidenziare eventi passati/attuali
         setInterval(displayEvents, 60000);
+        
+        // Funzione di utilità per debug
+        window.debugApp = function() {
+            console.log('📊 Stato app:', {
+                currentUser,
+                eventsCount: eventsArray.length,
+                usersCount: usersSet.size,
+                events: eventsArray
+            });
+        };
     </script>
 </body>
 </html>
