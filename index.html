@@ -612,33 +612,18 @@
             const sampleEvents = [
                 {
                     id: 1,
-                    title: "Riunione di Team",
+                    title: "Daily rehearsals",
                     date: new Date(Date.now() + 2 * 60 * 60 * 1000), // Tra 2 ore
-                    description: "Discussione sui progetti Q4",
-                    priority: "high",
-                    author: "Admin",
-                    files: ["agenda.pdf", "report.xlsx"],
-                    comments: [
-                        { author: "Marco", text: "Perfetto, sarò presente!", timestamp: new Date() }
-                    ],
-                    createdAt: new Date()
-                },
-                {
-                    id: 2,
-                    title: "Presentazione Cliente",
-                    date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Domani
-                    description: "Presentazione del nuovo prodotto al cliente XYZ",
+                    description: "Sessioni di prova giornaliere per la preparazione",
                     priority: "medium",
-                    author: "Admin",
-                    files: ["presentazione.pptx"],
+                    author: "Sistema",
+                    files: [],
                     comments: [],
                     createdAt: new Date()
                 }
             ];
 
             events = sampleEvents;
-            users.add("Admin");
-            users.add("Marco");
             
             renderEvents();
             updateUserList();
