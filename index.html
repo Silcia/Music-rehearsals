@@ -456,58 +456,97 @@
         }
 
         function createEvent() {
-            if (!currentUser) {
-                alert('Per favore, accedi prima di creare un evento!');
-                return;
+            try {
+                console.log('Inizio creazione evento'); // Debug
+                console.log('Utente corrente:', currentUser); // Debug
+                
+                if (!currentUser) {
+                    alert('Per favore, accedi prima di creare un evento!');
+                    return;
+                }
+
+                const titleEl = document.getElementById('event-title');
+                const dateEl = document.getElementById('event-date');
+                const descEl = document.getElementById('event-description');
+                const priorityEl = document.getElementById('event-priority');
+                const filesEl = document.getElementById('event-files');
+
+                console.log('Elementi trovati:', {
+                    title: titleEl ? 'OK' : 'MANCANTE',
+                    date: dateEl ? 'OK' : 'MANCANTE',
+                    desc: descEl ? 'OK' : 'MANCANTE',
+                    priority: priorityEl ? 'OK' : 'MANCANTE',
+                    files: filesEl ? 'OK' : 'MANCANTE'
+                });
+
+                if (!titleEl || !dateEl || !descEl || !priorityEl || !filesEl) {
+                    alert('Errore: alcuni elementi del form non sono stati trovati!');
+                    return;
+                }
+
+                const title = titleEl.value.trim();
+                const dateInput = dateEl.value;
+                const description = descEl.value.trim();
+                const priority = priorityEl.value;
+                const files = filesEl.files;
+
+                console.log('Valori estratti:', { title, dateInput, description, priority });
+
+                if (!title) {
+                    alert('Per favore, inserisci il titolo dell\'evento!');
+                    titleEl.focus();
+                    return;
+                }
+
+                if (!dateInput) {
+                    alert('Per favore, seleziona data e ora per l\'evento!');
+                    dateEl.focus();
+                    return;
+                }
+
+                const eventDate = new Date(dateInput);
+                if (isNaN(eventDate.getTime())) {
+                    alert('Data non valida!');
+                    return;
+                }
+
+                const event = {
+                    id: Date.now() + Math.random(), // ID più unico
+                    title: title,
+                    date: eventDate,
+                    description: description || 'Nessuna descrizione',
+                    priority: priority,
+                    author: currentUser,
+                    files: files ? Array.from(files).map(file => file.name) : [],
+                    comments: [],
+                    createdAt: new Date()
+                };
+
+                console.log('Evento da aggiungere:', event);
+                console.log('Array eventi prima:', events.length);
+
+                events.push(event);
+                console.log('Array eventi dopo:', events.length);
+
+                // Ordina per data
+                events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // Pulisci il form
+                titleEl.value = '';
+                dateEl.value = '';
+                descEl.value = '';
+                if (filesEl) filesEl.value = '';
+
+                console.log('Form pulito, chiamando renderEvents...');
+                renderEvents();
+                updateStats();
+
+                alert('Evento "' + title + '" creato con successo!');
+                
+            } catch (error) {
+                console.error('Errore nella creazione evento:', error);
+                alert('Si è verificato un errore: ' + error.message);
             }
-
-            const title = document.getElementById('event-title').value.trim();
-            const dateInput = document.getElementById('event-date').value;
-            const description = document.getElementById('event-description').value.trim();
-            const priority = document.getElementById('event-priority').value;
-            const files = document.getElementById('event-files').files;
-
-            console.log('Dati evento:', { title, dateInput, description, priority }); // Debug
-
-            if (!title) {
-                alert('Per favore, inserisci il titolo dell\'evento!');
-                return;
-            }
-
-            if (!dateInput) {
-                alert('Per favore, seleziona data e ora per l\'evento!');
-                return;
-            }
-
-            const event = {
-                id: Date.now(),
-                title,
-                date: new Date(dateInput),
-                description: description || 'Nessuna descrizione',
-                priority,
-                author: currentUser,
-                files: Array.from(files).map(file => file.name),
-                comments: [],
-                createdAt: new Date()
-            };
-
-            console.log('Evento creato:', event); // Debug
-
-            events.push(event);
-            events.sort((a, b) => a.date - b.date);
-
-            // Pulisci il form
-            document.getElementById('event-title').value = '';
-            document.getElementById('event-date').value = '';
-            document.getElementById('event-description').value = '';
-            document.getElementById('event-files').value = '';
-
-            console.log('Eventi totali:', events.length); // Debug
-
-            renderEvents();
-            updateStats();
-
-            alert('Evento creato con successo!'); // Conferma
         }
 
         function renderEvents() {
