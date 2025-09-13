@@ -370,7 +370,7 @@
         <div class="user-section">
             <div class="user-input">
                 <input type="text" id="username" placeholder="Il tuo nome..." />
-                <button onclick="setUser()">Accedi</button>
+                <button type="button" id="login-btn">Accedi</button>
                 <span id="current-user" style="font-weight: bold; color: #2c3e50;"></span>
             </div>
         </div>
@@ -397,7 +397,7 @@
                     <div class="form-row">
                         <textarea id="event-description" placeholder="Descrizione evento..." class="form-full"></textarea>
                     </div>
-                    <button onclick="createEvent()">Crea Evento</button>
+                    <button type="button" id="create-btn">Crea Evento</button>
                 </div>
 
                 <div class="events-list" id="events-list">
@@ -429,139 +429,99 @@
     </div>
 
     <script>
-        // Test di funzionamento all'avvio
-        console.log('Script caricato correttamente!');
+        console.log('App inizializzata!');
         
-        // Aggiungi listener per testare
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM caricato, elementi disponibili');
-        });
-
         let currentUser = '';
-        let events = [];
-        let users = new Set();
+        let eventsArray = [];
+        let usersSet = new Set();
 
-        function setUser() {
+        function loginUser() {
+            console.log('Tentativo di login...');
             const username = document.getElementById('username').value.trim();
             if (username) {
                 currentUser = username;
-                users.add(username);
+                usersSet.add(username);
                 document.getElementById('current-user').textContent = `Benvenuto, ${username}!`;
                 document.getElementById('username').value = '';
-                updateUserList();
-                updateStats();
+                displayUserList();
+                updateStatistics();
+                console.log('Login effettuato per:', username);
+            } else {
+                alert('Per favore, inserisci un nome utente!');
             }
         }
 
-        function updateUserList() {
+        function displayUserList() {
             const userList = document.getElementById('user-list');
             userList.innerHTML = '';
-            users.forEach(user => {
+            usersSet.forEach(user => {
                 const li = document.createElement('li');
                 li.textContent = user;
                 userList.appendChild(li);
             });
         }
 
-        function createEvent() {
-            try {
-                console.log('Inizio creazione evento'); // Debug
-                console.log('Utente corrente:', currentUser); // Debug
-                
-                if (!currentUser) {
-                    alert('Per favore, accedi prima di creare un evento!');
-                    return;
-                }
-
-                const titleEl = document.getElementById('event-title');
-                const dateEl = document.getElementById('event-date');
-                const descEl = document.getElementById('event-description');
-                const priorityEl = document.getElementById('event-priority');
-                const filesEl = document.getElementById('event-files');
-
-                console.log('Elementi trovati:', {
-                    title: titleEl ? 'OK' : 'MANCANTE',
-                    date: dateEl ? 'OK' : 'MANCANTE',
-                    desc: descEl ? 'OK' : 'MANCANTE',
-                    priority: priorityEl ? 'OK' : 'MANCANTE',
-                    files: filesEl ? 'OK' : 'MANCANTE'
-                });
-
-                if (!titleEl || !dateEl || !descEl || !priorityEl || !filesEl) {
-                    alert('Errore: alcuni elementi del form non sono stati trovati!');
-                    return;
-                }
-
-                const title = titleEl.value.trim();
-                const dateInput = dateEl.value;
-                const description = descEl.value.trim();
-                const priority = priorityEl.value;
-                const files = filesEl.files;
-
-                console.log('Valori estratti:', { title, dateInput, description, priority });
-
-                if (!title) {
-                    alert('Per favore, inserisci il titolo dell\'evento!');
-                    titleEl.focus();
-                    return;
-                }
-
-                if (!dateInput) {
-                    alert('Per favore, seleziona data e ora per l\'evento!');
-                    dateEl.focus();
-                    return;
-                }
-
-                const eventDate = new Date(dateInput);
-                if (isNaN(eventDate.getTime())) {
-                    alert('Data non valida!');
-                    return;
-                }
-
-                const event = {
-                    id: Date.now() + Math.random(), // ID più unico
-                    title: title,
-                    date: eventDate,
-                    description: description || 'Nessuna descrizione',
-                    priority: priority,
-                    author: currentUser,
-                    files: files ? Array.from(files).map(file => file.name) : [],
-                    comments: [],
-                    createdAt: new Date()
-                };
-
-                console.log('Evento da aggiungere:', event);
-                console.log('Array eventi prima:', events.length);
-
-                events.push(event);
-                console.log('Array eventi dopo:', events.length);
-
-                // Ordina per data
-                events.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-                // Pulisci il form
-                titleEl.value = '';
-                dateEl.value = '';
-                descEl.value = '';
-                if (filesEl) filesEl.value = '';
-
-                console.log('Form pulito, chiamando renderEvents...');
-                renderEvents();
-                updateStats();
-
-                alert('Evento "' + title + '" creato con successo!');
-                
-            } catch (error) {
-                console.error('Errore nella creazione evento:', error);
-                alert('Si è verificato un errore: ' + error.message);
+        function saveNewEvent() {
+            console.log('Tentativo di creare evento...');
+            
+            if (!currentUser) {
+                alert('Per favore, accedi prima di creare un evento!');
+                return;
             }
+
+            const title = document.getElementById('event-title').value.trim();
+            const dateInput = document.getElementById('event-date').value;
+            const description = document.getElementById('event-description').value.trim();
+            const priority = document.getElementById('event-priority').value;
+            const files = document.getElementById('event-files').files;
+
+            console.log('Dati raccolti:', { title, dateInput, description, priority });
+
+            if (!title) {
+                alert('Per favore, inserisci il titolo dell\'evento!');
+                return;
+            }
+
+            if (!dateInput) {
+                alert('Per favore, seleziona data e ora!');
+                return;
+            }
+
+            const eventData = {
+                id: Date.now() + Math.random(),
+                title: title,
+                date: new Date(dateInput),
+                description: description || 'Nessuna descrizione',
+                priority: priority,
+                author: currentUser,
+                files: Array.from(files).map(file => file.name),
+                comments: [],
+                createdAt: new Date()
+            };
+
+            console.log('Evento da salvare:', eventData);
+
+            eventsArray.push(eventData);
+            eventsArray.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Pulisci form
+            document.getElementById('event-title').value = '';
+            document.getElementById('event-date').value = '';
+            document.getElementById('event-description').value = '';
+            document.getElementById('event-files').value = '';
+
+            displayEvents();
+            updateStatistics();
+
+            console.log('Evento creato con successo!');
+            alert('Evento "' + title + '" creato con successo!');
         }
 
-        function renderEvents() {
+        function displayEvents() {
             const eventsList = document.getElementById('events-list');
             eventsList.innerHTML = '';
 
-            events.forEach(event => {
+            eventsArray.forEach(event => {
                 const eventCard = document.createElement('div');
                 eventCard.className = `event-card priority-${event.priority}`;
                 
@@ -577,12 +537,12 @@
                             <div class="event-meta">
                                 📅 ${eventDate.toLocaleDateString('it-IT')} - ${eventDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})}
                                 | 👤 ${event.author}
-                                <span class="priority-badge ${event.priority}">${getPriorityText(event.priority)}</span>
+                                <span class="priority-badge ${event.priority}">${getPriorityLabel(event.priority)}</span>
                                 ${isToday ? '<span style="color: #dc3545; font-weight: bold;">• OGGI</span>' : ''}
                                 ${isPast ? '<span style="color: #6c757d;">• PASSATO</span>' : ''}
                             </div>
                         </div>
-                        <button class="delete-btn" onclick="deleteEvent(${event.id})">🗑️</button>
+                        <button class="delete-btn" onclick="removeEvent(${event.id})">🗑️</button>
                     </div>
                     
                     ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
@@ -607,7 +567,7 @@
                         
                         <div class="comment-form">
                             <textarea class="comment-input" placeholder="Aggiungi un commento..." id="comment-${event.id}"></textarea>
-                            <button onclick="addComment(${event.id})">Invia</button>
+                            <button type="button" onclick="saveComment(${event.id})">Invia</button>
                         </div>
                     </div>
                 `;
@@ -616,7 +576,7 @@
             });
         }
 
-        function getPriorityText(priority) {
+        function getPriorityLabel(priority) {
             switch(priority) {
                 case 'high': return 'Alta';
                 case 'medium': return 'Media';
@@ -625,15 +585,15 @@
             }
         }
 
-        function deleteEvent(eventId) {
+        function removeEvent(eventId) {
             if (confirm('Sei sicuro di voler eliminare questo evento?')) {
-                events = events.filter(event => event.id !== eventId);
-                renderEvents();
-                updateStats();
+                eventsArray = eventsArray.filter(event => event.id !== eventId);
+                displayEvents();
+                updateStatistics();
             }
         }
 
-        function addComment(eventId) {
+        function saveComment(eventId) {
             if (!currentUser) {
                 alert('Per favore, accedi prima di commentare!');
                 return;
@@ -642,7 +602,7 @@
             const commentText = document.getElementById(`comment-${eventId}`).value.trim();
             if (!commentText) return;
 
-            const event = events.find(e => e.id === eventId);
+            const event = eventsArray.find(e => e.id === eventId);
             if (event) {
                 event.comments.push({
                     author: currentUser,
@@ -651,29 +611,28 @@
                 });
 
                 document.getElementById(`comment-${eventId}`).value = '';
-                renderEvents();
+                displayEvents();
             }
         }
 
-        function updateStats() {
+        function updateStatistics() {
             const today = new Date();
-            const todayEvents = events.filter(event => {
+            const todayEvents = eventsArray.filter(event => {
                 const eventDate = new Date(event.date);
                 return eventDate.toDateString() === today.toDateString();
             });
 
-            document.getElementById('total-events').textContent = events.length;
+            document.getElementById('total-events').textContent = eventsArray.length;
             document.getElementById('today-events').textContent = todayEvents.length;
-            document.getElementById('active-users').textContent = users.size;
+            document.getElementById('active-users').textContent = usersSet.size;
         }
 
-        // Carica alcuni eventi di esempio
-        function loadSampleData() {
+        function initializeApp() {
             const sampleEvents = [
                 {
                     id: 1,
                     title: "Daily rehearsals",
-                    date: new Date(Date.now() + 2 * 60 * 60 * 1000), // Tra 2 ore
+                    date: new Date(Date.now() + 2 * 60 * 60 * 1000),
                     description: "Sessioni di prova giornaliere per la preparazione",
                     priority: "medium",
                     author: "Sistema",
@@ -683,18 +642,33 @@
                 }
             ];
 
-            events = sampleEvents;
+            eventsArray = sampleEvents;
             
-            renderEvents();
-            updateUserList();
-            updateStats();
+            displayEvents();
+            displayUserList();
+            updateStatistics();
         }
 
-        // Inizializza l'app con dati di esempio
-        loadSampleData();
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM caricato!');
+            
+            const loginBtn = document.getElementById('login-btn');
+            const createBtn = document.getElementById('create-btn');
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', loginUser);
+            }
+            
+            if (createBtn) {
+                createBtn.addEventListener('click', saveNewEvent);
+            }
+            
+            initializeApp();
+        });
 
-        // Aggiorna l'orario ogni minuto per evidenziare eventi passati/attuali
-        setInterval(renderEvents, 60000);
+        // Aggiorna ogni minuto
+        setInterval(displayEvents, 60000);
     </script>
 </body>
 </html>
