@@ -655,6 +655,7 @@
             
             const loginBtn = document.getElementById('login-btn');
             const createBtn = document.getElementById('create-btn');
+            const notifyBtn = document.getElementById('notify-btn');
             
             if (loginBtn) {
                 loginBtn.addEventListener('click', loginUser);
@@ -662,6 +663,10 @@
             
             if (createBtn) {
                 createBtn.addEventListener('click', saveNewEvent);
+            }
+            
+            if (notifyBtn) {
+                notifyBtn.addEventListener('click', sendNotification);
             }
             
             initializeApp();
