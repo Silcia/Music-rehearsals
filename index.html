@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pianificatore Appuntamenti Condivisi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .user-section {
+            padding: 20px 30px;
+            border-bottom: 2px solid #f0f0f0;
+            background: #f8f9fa;
+        }
+
+        .user-input {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input, select, textarea, button {
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .events-section {
+            background: white;
+        }
+
+        .event-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .event-form h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        .events-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .event-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #4facfe;
+        }
+
+        .event-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .event-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .event-meta {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .event-description {
+            color: #495057;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .event-files {
+            margin-bottom: 15px;
+        }
+
+        .file-item {
+            background: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            display: inline-block;
+            font-size: 0.9em;
+            color: #1565c0;
+        }
+
+        .comments-section {
+            border-top: 1px solid #e9ecef;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .comment {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #4facfe;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .comment-input {
+            flex: 1;
+            min-height: 40px;
+            resize: vertical;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .user-list {
+            list-style: none;
+        }
+
+        .user-list li {
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .user-input {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .comment-form {
+                flex-direction: column;
+            }
+        }
+
+        .file-input-label {
+            background: #28a745;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: inline-block;
+        }
+
+        .file-input-label:hover {
+            background: #218838;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .priority-high {
+            border-left-color: #dc3545 !important;
+        }
+
+        .priority-medium {
+            border-left-color: #ffc107 !important;
+        }
+
+        .priority-low {
+            border-left-color: #28a745 !important;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-badge.high {
+            background: #dc3545;
+            color: white;
+        }
+
+        .priority-badge.medium {
+            background: #ffc107;
+            color: black;
+        }
+
+        .priority-badge.low {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Pianificatore Appuntamenti</h1>
+            <p>Organizza e condividi i tuoi eventi con il team</p>
+        </div>
+
+        <div class="user-section">
+            <div class="user-input">
+                <input type="text" id="username" placeholder="Il tuo nome..." />
+                <button onclick="setUser()">Accedi</button>
+                <span id="current-user" style="font-weight: bold; color: #2c3e50;"></span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="events-section">
+                <div class="event-form">
+                    <h3>➕ Crea Nuovo Evento</h3>
+                    <div class="form-row">
+                        <input type="text" id="event-title" placeholder="Titolo evento" />
+                        <input type="datetime-local" id="event-date" />
+                    </div>
+                    <div class="form-row">
+                        <select id="event-priority">
+                            <option value="low">Priorità Bassa</option>
+                            <option value="medium">Priorità Media</option>
+                            <option value="high">Priorità Alta</option>
+                        </select>
+                        <div>
+                            <label for="event-files" class="file-input-label">📎 Allega File</label>
+                            <input type="file" id="event-files" class="file-input" multiple />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <textarea id="event-description" placeholder="Descrizione evento..." class="form-full"></textarea>
+                    </div>
+                    <button onclick="createEvent()">Crea Evento</button>
+                </div>
+
+                <div class="events-list" id="events-list">
+                    <!-- Gli eventi verranno inseriti qui -->
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <h3>👥 Utenti Attivi</h3>
+                <ul class="user-list" id="user-list"></ul>
+
+                <div class="stats">
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">📊 Statistiche</h4>
+                    <div class="stat-item">
+                        <span>Eventi Totali:</span>
+                        <span id="total-events">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Eventi Oggi:</span>
+                        <span id="today-events">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Utenti Attivi:</span>
+                        <span id="active-users">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = '';
+        let events = [];
+        let users = new Set();
+
+        function setUser() {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                currentUser = username;
+                users.add(username);
+                document.getElementById('current-user').textContent = `Benvenuto, ${username}!`;
+                document.getElementById('username').value = '';
+                updateUserList();
+                updateStats();
+            }
+        }
+
+        function updateUserList() {
+            const userList = document.getElementById('user-list');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user;
+                userList.appendChild(li);
+            });
+        }
+
+        function createEvent() {
+            if (!currentUser) {
+                alert('Per favore, accedi prima di creare un evento!');
+                return;
+            }
+
+            const title = document.getElementById('event-title').value;
+            const date = document.getElementById('event-date').value;
+            const description = document.getElementById('event-description').value;
+            const priority = document.getElementById('event-priority').value;
+            const files = document.getElementById('event-files').files;
+
+            if (!title || !date) {
+                alert('Per favore, inserisci almeno titolo e data!');
+                return;
+            }
+
+            const event = {
+                id: Date.now(),
+                title,
+                date: new Date(date),
+                description,
+                priority,
+                author: currentUser,
+                files: Array.from(files).map(file => file.name),
+                comments: [],
+                createdAt: new Date()
+            };
+
+            events.push(event);
+            events.sort((a, b) => a.date - b.date);
+
+            // Pulisci il form
+            document.getElementById('event-title').value = '';
+            document.getElementById('event-date').value = '';
+            document.getElementById('event-description').value = '';
+            document.getElementById('event-files').value = '';
+
+            renderEvents();
+            updateStats();
+        }
+
+        function renderEvents() {
+            const eventsList = document.getElementById('events-list');
+            eventsList.innerHTML = '';
+
+            events.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.className = `event-card priority-${event.priority}`;
+                
+                const eventDate = new Date(event.date);
+                const now = new Date();
+                const isToday = eventDate.toDateString() === now.toDateString();
+                const isPast = eventDate < now;
+
+                eventCard.innerHTML = `
+                    <div class="event-header">
+                        <div>
+                            <div class="event-title">${event.title}</div>
+                            <div class="event-meta">
+                                📅 ${eventDate.toLocaleDateString('it-IT')} - ${eventDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})}
+                                | 👤 ${event.author}
+                                <span class="priority-badge ${event.priority}">${getPriorityText(event.priority)}</span>
+                                ${isToday ? '<span style="color: #dc3545; font-weight: bold;">• OGGI</span>' : ''}
+                                ${isPast ? '<span style="color: #6c757d;">• PASSATO</span>' : ''}
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteEvent(${event.id})">🗑️</button>
+                    </div>
+                    
+                    ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                    
+                    ${event.files.length > 0 ? `
+                        <div class="event-files">
+                            <strong>📎 File allegati:</strong><br>
+                            ${event.files.map(file => `<span class="file-item">${file}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="comments-section">
+                        <strong>💬 Commenti (${event.comments.length})</strong>
+                        <div id="comments-${event.id}">
+                            ${event.comments.map(comment => `
+                                <div class="comment">
+                                    <div class="comment-author">${comment.author}</div>
+                                    <div class="comment-text">${comment.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="comment-form">
+                            <textarea class="comment-input" placeholder="Aggiungi un commento..." id="comment-${event.id}"></textarea>
+                            <button onclick="addComment(${event.id})">Invia</button>
+                        </div>
+                    </div>
+                `;
+
+                eventsList.appendChild(eventCard);
+            });
+        }
+
+        function getPriorityText(priority) {
+            switch(priority) {
+                case 'high': return 'Alta';
+                case 'medium': return 'Media';
+                case 'low': return 'Bassa';
+                default: return 'Media';
+            }
+        }
+
+        function deleteEvent(eventId) {
+            if (confirm('Sei sicuro di voler eliminare questo evento?')) {
+                events = events.filter(event => event.id !== eventId);
+                renderEvents();
+                updateStats();
+            }
+        }
+
+        function addComment(eventId) {
+            if (!currentUser) {
+                alert('Per favore, accedi prima di commentare!');
+                return;
+            }
+
+            const commentText = document.getElementById(`comment-${eventId}`).value.trim();
+            if (!commentText) return;
+
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+                event.comments.push({
+                    author: currentUser,
+                    text: commentText,
+                    timestamp: new Date()
+                });
+
+                document.getElementById(`comment-${eventId}`).value = '';
+                renderEvents();
+            }
+        }
+
+        function updateStats() {
+            const today = new Date();
+            const todayEvents = events.filter(event => {
+                const eventDate = new Date(event.date);
+                return eventDate.toDateString() === today.toDateString();
+            });
+
+            document.getElementById('total-events').textContent = events.length;
+            document.getElementById('today-events').textContent = todayEvents.length;
+            document.getElementById('active-users').textContent = users.size;
+        }
+
+        // Carica alcuni eventi di esempio
+        function loadSampleData() {
+            const sampleEvents = [
+                {
+                    id: 1,
+                    title: "Riunione di Team",
+                    date: new Date(Date.now() + 2 * 60 * 60 * 1000), // Tra 2 ore
+                    description: "Discussione sui progetti Q4",
+                    priority: "high",
+                    author: "Admin",
+                    files: ["agenda.pdf", "report.xlsx"],
+                    comments: [
+                        { author: "Marco", text: "Perfetto, sarò presente!", timestamp: new Date() }
+                    ],
+                    createdAt: new Date()
+                },
+                {
+                    id: 2,
+                    title: "Presentazione Cliente",
+                    date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Domani
+                    description: "Presentazione del nuovo prodotto al cliente XYZ",
+                    priority: "medium",
+                    author: "Admin",
+                    files: ["presentazione.pptx"],
+                    comments: [],
+                    createdAt: new Date()
+                }
+            ];
+
+            events = sampleEvents;
+            users.add("Admin");
+            users.add("Marco");
+            
+            renderEvents();
+            updateUserList();
+            updateStats();
+        }
+
+        // Inizializza l'app con dati di esempio
+        loadSampleData();
+
+        // Aggiorna l'orario ogni minuto per evidenziare eventi passati/attuali
+        setInterval(renderEvents, 60000);
+    </script>
+</body>
+</html>
