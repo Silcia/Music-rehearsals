@@ -461,28 +461,37 @@
                 return;
             }
 
-            const title = document.getElementById('event-title').value;
-            const date = document.getElementById('event-date').value;
-            const description = document.getElementById('event-description').value;
+            const title = document.getElementById('event-title').value.trim();
+            const dateInput = document.getElementById('event-date').value;
+            const description = document.getElementById('event-description').value.trim();
             const priority = document.getElementById('event-priority').value;
             const files = document.getElementById('event-files').files;
 
-            if (!title || !date) {
-                alert('Per favore, inserisci almeno titolo e data!');
+            console.log('Dati evento:', { title, dateInput, description, priority }); // Debug
+
+            if (!title) {
+                alert('Per favore, inserisci il titolo dell\'evento!');
+                return;
+            }
+
+            if (!dateInput) {
+                alert('Per favore, seleziona data e ora per l\'evento!');
                 return;
             }
 
             const event = {
                 id: Date.now(),
                 title,
-                date: new Date(date),
-                description,
+                date: new Date(dateInput),
+                description: description || 'Nessuna descrizione',
                 priority,
                 author: currentUser,
                 files: Array.from(files).map(file => file.name),
                 comments: [],
                 createdAt: new Date()
             };
+
+            console.log('Evento creato:', event); // Debug
 
             events.push(event);
             events.sort((a, b) => a.date - b.date);
@@ -493,8 +502,12 @@
             document.getElementById('event-description').value = '';
             document.getElementById('event-files').value = '';
 
+            console.log('Eventi totali:', events.length); // Debug
+
             renderEvents();
             updateStats();
+
+            alert('Evento creato con successo!'); // Conferma
         }
 
         function renderEvents() {
